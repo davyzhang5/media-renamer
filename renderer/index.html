@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>媒体命名助手</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-mark" src="../build/icon.png" alt="M" />
+          <div>
+            <h1>媒体命名助手</h1>
+            <p>本地视觉模型 · 按内容批量重命名</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <button class="button button-quiet" id="undoButton" hidden>
+            撤销上次改名
+          </button>
+          <button class="button button-quiet" id="settingsButton">
+            设置
+          </button>
+          <button class="button button-primary" id="addButton">
+            选择文件
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="hero-panel">
+          <div>
+            <span class="eyebrow">LOCAL FIRST</span>
+            <h2>把素材拖进来，<br />让画面决定名字。</h2>
+            <p class="hero-copy">
+              图片和视频只在本机处理。模型生成建议后，你可以逐条修改，再统一应用。
+            </p>
+          </div>
+          <div class="model-card">
+            <span class="status-dot" id="modelDot"></span>
+            <div>
+              <strong id="modelTitle">本地模型待检测</strong>
+              <p id="modelStatus">首次分析时会自动启动 Qwen 视觉模型</p>
+            </div>
+            <button class="text-button" id="checkModelButton">检查</button>
+            <div class="model-progress" id="modelProgress" hidden>
+              <span id="modelProgressBar"></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="drop-zone" id="dropZone">
+          <input
+            id="fileInput"
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            hidden
+          />
+          <div class="drop-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 11V6a2 2 0 0 0-4 0v4" />
+              <path d="M14 10V4a2 2 0 0 0-4 0v8" />
+              <path d="M10 10.5V6a2 2 0 0 0-4 0v8" />
+              <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+            </svg>
+            <span class="gesture-line"></span>
+          </div>
+          <div>
+            <h3>拖入图片或视频</h3>
+            <p>支持 JPG、PNG、HEIC、WebP、MP4、MOV、MKV 等格式</p>
+          </div>
+          <button class="button button-outline" id="dropAddButton">
+            浏览文件
+          </button>
+        </section>
+
+        <section class="queue-panel">
+          <div class="queue-heading">
+            <div>
+              <h2>待处理素材</h2>
+              <p id="queueSummary">还没有添加文件</p>
+            </div>
+            <div class="queue-actions">
+              <button class="button button-quiet" id="clearButton" hidden>
+                清空
+              </button>
+              <button class="button button-primary" id="analyzeButton" disabled>
+                开始分析
+              </button>
+              <button class="button button-accent" id="applyButton" disabled>
+                应用新文件名
+              </button>
+            </div>
+          </div>
+
+          <div class="file-list" id="fileList"></div>
+        </section>
+      </main>
+
+      <aside class="settings-drawer" id="settingsDrawer" aria-hidden="true">
+        <div class="drawer-header">
+          <div>
+            <span class="eyebrow">CONFIGURATION</span>
+            <h2>命名与模型设置</h2>
+          </div>
+          <button class="icon-button" id="closeSettingsButton">×</button>
+        </div>
+
+        <div class="drawer-body">
+          <section class="settings-section">
+            <h3>命名规则</h3>
+            <div class="naming-builder-heading">
+              <div>
+                <strong>文件名字段</strong>
+                <p>点亮字段加入文件名，左右拖动调整顺序。</p>
+              </div>
+              <button class="text-button" id="resetFieldOrderButton">
+                恢复默认顺序
+              </button>
+            </div>
+            <div
+              class="naming-field-list"
+              id="namingFieldList"
+              aria-label="可排序的文件名字段"
+            ></div>
+            <div class="naming-preview">
+              <span>文件名预览</span>
+              <code id="namingPreview"></code>
+            </div>
+            <div class="field-grid">
+              <label>
+                日期格式
+                <input id="dateFormat" type="text" spellcheck="false" />
+              </label>
+              <label>
+                分隔符
+                <select id="separator">
+                  <option value="_">下划线 _</option>
+                  <option value="-">短横线 -</option>
+                  <option value=" ">空格</option>
+                </select>
+              </label>
+            </div>
+            <div class="field-grid">
+              <label>
+                输出语言
+                <select id="language">
+                  <option value="zh">简体中文</option>
+                  <option value="en">English</option>
+                </select>
+              </label>
+              <label>
+                标题最大长度
+                <input id="titleLength" type="number" min="8" max="60" />
+              </label>
+            </div>
+            <label>
+              附加提示词
+              <textarea
+                id="customPrompt"
+                rows="4"
+                placeholder="例如：优先描述空间用途；不要出现品牌猜测。"
+              ></textarea>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h3>本地模型</h3>
+            <label>
+              连接方式
+              <select id="provider">
+                <option value="managed">应用自动启动 llama-server</option>
+                <option value="openai">兼容 OpenAI 的本地服务</option>
+              </select>
+            </label>
+            <div id="managedSettings">
+              <label>
+                llama-server
+                <div class="path-field">
+                  <input id="llamaServerPath" type="text" spellcheck="false" />
+                  <button data-browse="llamaServerPath">选择</button>
+                </div>
+              </label>
+              <label>
+                模型 GGUF
+                <div class="path-field">
+                  <input id="modelPath" type="text" spellcheck="false" />
+                  <button data-browse="modelPath">选择</button>
+                </div>
+              </label>
+              <label>
+                视觉投影 mmproj
+                <div class="path-field">
+                  <input id="mmprojPath" type="text" spellcheck="false" />
+                  <button data-browse="mmprojPath">选择</button>
+                </div>
+              </label>
+              <div class="field-grid">
+                <label>
+                  端口
+                  <input id="managedPort" type="number" />
+                </label>
+                <label>
+                  上下文长度
+                  <input id="contextSize" type="number" />
+                </label>
+              </div>
+            </div>
+            <div id="openAiSettings" hidden>
+              <label>
+                API 地址
+                <input
+                  id="apiBase"
+                  type="url"
+                  placeholder="http://127.0.0.1:11434/v1"
+                />
+              </label>
+              <div class="field-grid">
+                <label>
+                  模型名称
+                  <input id="modelName" type="text" placeholder="留空自动读取" />
+                </label>
+                <label>
+                  API Key
+                  <input id="apiKey" type="password" />
+                </label>
+              </div>
+            </div>
+            <label>
+              FFmpeg
+              <div class="path-field">
+                <input id="ffmpegPath" type="text" spellcheck="false" />
+                <button data-browse="ffmpegPath">选择</button>
+              </div>
+            </label>
+          </section>
+
+          <p class="privacy-note">
+            默认不会上传任何媒体。若改用远程 OpenAI 兼容服务，请自行确认其隐私政策。
+          </p>
+        </div>
+
+        <div class="drawer-footer">
+          <span id="settingsMessage"></span>
+          <button class="button button-primary" id="saveSettingsButton">
+            保存设置
+          </button>
+        </div>
+      </aside>
+
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <div class="toast" id="toast" role="status"></div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
