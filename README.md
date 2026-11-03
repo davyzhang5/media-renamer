@@ -84,15 +84,14 @@ npm run pack:mac
 ## GitHub 自动发布
 
 仓库包含 `.github/workflows/release.yml`。推送 `v*` 标签后，GitHub Actions
-会分别构建 Apple Silicon 和 Intel Mac 安装包，并创建 GitHub Release：
+会构建 Apple Silicon、Intel Mac 和 Windows x64 安装包，并创建 GitHub Release：
 
 ```bash
-git tag v0.4.0
-git push origin v0.4.0
+git tag v0.5.0
+git push origin v0.5.0
 ```
 
-当前自动发布仅覆盖 macOS。Windows 需要完成 FFmpeg 自动安装、Windows
-路径验证和实际安装测试后再加入发布矩阵。
+Windows 安装包内置 FFmpeg 和 FFprobe，本地模型运行时会在首次使用时自动下载。
 
 ## 后续计划
 
@@ -100,5 +99,4 @@ git push origin v0.4.0
 - 受控词表和品牌/项目词库
 - 批量并发与失败重试
 - 自定义文件夹分类树
-- Windows 打包和 FFmpeg 自动配置
 - 模型资源管理界面

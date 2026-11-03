@@ -235,6 +235,7 @@ function applyRenames(items, journalPath) {
         skipped: true,
         originalPath: sourcePath,
         newPath: sourcePath,
+        newName: path.basename(sourcePath),
       });
       continue;
     }
@@ -246,6 +247,7 @@ function applyRenames(items, journalPath) {
         skipped: false,
         originalPath: sourcePath,
         newPath: targetPath,
+        newName: path.basename(targetPath),
       });
     } catch (error) {
       results.push({

@@ -21,18 +21,21 @@ const RUNTIME_TARGETS = {
     filename: `llama-${RUNTIME_VERSION}-bin-macos-arm64.tar.gz`,
     executable: 'llama-server',
     archive: 'tar',
+    size: 11123196,
   },
   'darwin-x64': {
     url: `https://github.com/ggml-org/llama.cpp/releases/download/${RUNTIME_VERSION}/llama-${RUNTIME_VERSION}-bin-macos-x64.tar.gz`,
     filename: `llama-${RUNTIME_VERSION}-bin-macos-x64.tar.gz`,
     executable: 'llama-server',
     archive: 'tar',
+    size: 11123196,
   },
   'win32-x64': {
     url: `https://github.com/ggml-org/llama.cpp/releases/download/${RUNTIME_VERSION}/llama-${RUNTIME_VERSION}-bin-win-vulkan-x64.zip`,
     filename: `llama-${RUNTIME_VERSION}-bin-win-vulkan-x64.zip`,
     executable: 'llama-server.exe',
     archive: 'zip',
+    size: 35221385,
   },
 };
 
@@ -291,10 +294,16 @@ async function installLocalModel({ baseDir, onProgress }) {
   fs.mkdirSync(layout.downloadsDir, { recursive: true });
   fs.mkdirSync(layout.modelsDir, { recursive: true });
 
-  const statfs = fs.statfsSync(baseDir);
-  const freeBytes = Number(statfs.bavail) * Number(statfs.bsize);
+  let freeBytes = Number.POSITIVE_INFINITY;
+  try {
+    const statfs = fs.statfsSync(baseDir);
+    freeBytes = Number(statfs.bavail) * Number(statfs.bsize);
+  } catch {
+    // Some Windows filesystems do not expose statfs; continue without the precheck.
+  }
+  const runtimeSize = target.size || EXPECTED_SIZES.runtime;
   const requiredBytes =
-    EXPECTED_SIZES.runtime +
+    runtimeSize +
     EXPECTED_SIZES.model +
     EXPECTED_SIZES.mmproj;
   if (freeBytes < requiredBytes + 500 * 1024 * 1024) {
@@ -320,19 +329,19 @@ async function installLocalModel({ baseDir, onProgress }) {
     await downloadFile({
       url: target.url,
       destination: layout.runtimeArchive,
-      expectedSize: EXPECTED_SIZES.runtime,
+      expectedSize: runtimeSize,
       signal: activeDownloadController.signal,
       onProgress: (received) => {
         onProgress?.({
           phase: 'runtime',
           label: '正在下载本地推理运行时',
-          percent: Math.round((received / EXPECTED_SIZES.runtime) * 100),
+          percent: Math.round((received / runtimeSize) * 100),
           overallBytes: completedBefore + received,
           overallTotal,
         });
       },
     });
-    completedBefore += EXPECTED_SIZES.runtime;
+    completedBefore += runtimeSize;
 
     onProgress?.({
       phase: 'runtime',

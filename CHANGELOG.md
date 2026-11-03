@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Add a Windows x64 NSIS installer to the automated release workflow.
+- Bundle FFmpeg and FFprobe for Windows.
+- Add Windows local-model runtime downloads and automatic installation.
+- Fix cross-platform path handling after batch renames and undo.
+- Keep Apple Silicon and Intel macOS builds in the same release.
+
 ## 0.4.0
 
 - Add one-click local vision model download and automatic setup.

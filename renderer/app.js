@@ -474,7 +474,8 @@ async function applyNames() {
       const file = files.find((candidate) => candidate.path === result.originalPath);
       if (!file) continue;
       file.path = result.newPath;
-      file.name = result.newPath.split('/').pop();
+      file.name =
+        result.newName || result.newPath.split(/[\\/]/).pop();
       file.alreadyApplied = true;
       renamed += result.skipped ? 0 : 1;
     }
@@ -499,7 +500,8 @@ async function undoLastRename() {
       const file = files.find((candidate) => candidate.path === result.originalPath);
       if (file) {
         file.path = result.newPath;
-        file.name = result.newPath.split('/').pop();
+        file.name =
+          result.newName || result.newPath.split(/[\\/]/).pop();
       }
     }
     renderFiles();

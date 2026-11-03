@@ -17,6 +17,13 @@ test('runtime download target is defined for the current Mac', () => {
   assert.equal(target.executable, 'llama-server');
 });
 
+test('Windows x64 runtime target and installer size are configured', () => {
+  const target = getRuntimeTarget('win32', 'x64');
+  assert.match(target.url, /bin-win-vulkan-x64\.zip$/);
+  assert.equal(target.executable, 'llama-server.exe');
+  assert.equal(target.size, 35221385);
+});
+
 test('custom installed model paths are detected without manual probing', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'model-install-'));
   const llama = path.join(directory, 'llama-server');

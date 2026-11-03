@@ -12,6 +12,9 @@ const DEFAULT_PORT = 19080;
 
 function detectedDefaults() {
   const home = os.homedir();
+  const bundledFfmpegDir = app.isPackaged
+    ? path.join(process.resourcesPath, 'ffmpeg')
+    : path.join(__dirname, '..', 'vendor', 'ffmpeg');
   const renamerResources = path.join(
     home,
     'Library',
@@ -37,8 +40,14 @@ function detectedDefaults() {
       'qwen3_5-4b-q4km-v1-mmproj',
       'mmproj-F16.gguf'
     ),
-    ffmpegPath: '/opt/homebrew/bin/ffmpeg',
-    ffprobePath: '/opt/homebrew/bin/ffprobe',
+    ffmpegPath:
+      process.platform === 'win32'
+        ? path.join(bundledFfmpegDir, 'ffmpeg.exe')
+        : '/opt/homebrew/bin/ffmpeg',
+    ffprobePath:
+      process.platform === 'win32'
+        ? path.join(bundledFfmpegDir, 'ffprobe.exe')
+        : '/opt/homebrew/bin/ffprobe',
   };
 
   return Object.fromEntries(
